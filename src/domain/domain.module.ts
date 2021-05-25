@@ -10,6 +10,7 @@ import { EmailCampaign } from './entities/email-campaign.entity';
 import { EmailCampaignGroup } from './entities/email-campaign-group.entity';
 import { EmailCampaignAudience } from './entities/email-campaign-audience.entity';
 import { EmailCampaignAnalytic } from './entities/email-campaign-analytic.entity';
+import { EmailCampaignAudienceService } from './services/email-campaign-audience.service';
 
 const providers: Provider[] = [
   {
@@ -19,6 +20,10 @@ const providers: Provider[] = [
   {
     provide: 'EMAIL_CAMPAIGN_SERVICE',
     useClass: EmailCampaignService,
+  },
+  {
+    provide: 'EMAIL_CAMPAIGN_AUDIENCE_SERVICE',
+    useClass: EmailCampaignAudienceService,
   },
   {
     provide: 'EMAIL_ANALYTIC_SERVICE',

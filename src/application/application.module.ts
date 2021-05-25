@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { EmailTemplateExistsRule } from './rules/email-template-exists.rule';
+import { GroupExistsRule } from './rules/group-exists.rule';
 
 import { DomainModule } from '../domain/domain.module';
 import { InfrastructureModule } from '../infrastructure/infrastructure.module';
@@ -15,7 +16,7 @@ import { EmailAnalyticController } from './controllers/email-analytic.controller
     EmailCampaignController,
     EmailAnalyticController,
   ],
-  providers: [EmailTemplateExistsRule],
+  providers: [EmailTemplateExistsRule, GroupExistsRule],
   exports: [InfrastructureModule, DomainModule],
 })
 export class ApplicationModule {}

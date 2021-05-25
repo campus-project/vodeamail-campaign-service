@@ -22,6 +22,9 @@ export class EmailCampaignAnalytic {
   @Column({ type: 'enum', enum: EmailCampaignAnalyticType })
   type: EmailCampaignAnalyticType;
 
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  timestamp: string;
+
   @ManyToOne(() => EmailCampaign, (object) => object.email_campaign_groups)
   email_campaign: EmailCampaign;
 

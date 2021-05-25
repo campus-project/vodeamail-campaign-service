@@ -1,10 +1,16 @@
 import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
   IsUUID,
+  MaxLength,
+  Validate,
 } from 'class-validator';
+import { GroupExistsRule } from '../../rules/group-exists.rule';
+import { EmailTemplateExistsRule } from '../../rules/email-template-exists.rule';
 
 export class CreateEmailCampaignDto {
   @IsNotEmpty()
@@ -17,19 +23,34 @@ export class CreateEmailCampaignDto {
 
   @IsNotEmpty()
   @IsString()
-  design: string;
+  subject: string;
 
   @IsNotEmpty()
   @IsString()
-  html: string;
+  from_name: string;
 
   @IsNotEmpty()
-  @IsString()
-  example_value_tags: string;
+  @MaxLength(15)
+  from: string;
 
   @IsNotEmpty()
-  @IsUrl()
-  image_url: string;
+  @IsDateString()
+  send_at: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  is_directly_send: boolean;
+
+  @IsNotEmpty()
+  @IsUUID('4')
+  @Validate(EmailTemplateExistsRule)
+  email_template_id: string;
+
+  @IsNotEmpty()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @Validate(GroupExistsRule, { each: true })
+  group_ids: string[];
 
   @IsOptional()
   @IsUUID('4')

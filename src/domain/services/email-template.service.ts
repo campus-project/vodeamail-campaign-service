@@ -88,7 +88,12 @@ export class EmailTemplateService {
       actor,
     } = updateEmailTemplateDto;
 
-    const data = await this.emailTemplateRepository.findOne({ id });
+    const data = await this.emailTemplateRepository.findOne({
+      where: {
+        id,
+        organization_id,
+      },
+    });
 
     if (!data) {
       throw new RpcException(
@@ -102,7 +107,6 @@ export class EmailTemplateService {
 
     await this.emailTemplateRepository.save({
       ...data,
-      organization_id,
       name,
       design,
       html,
@@ -121,9 +125,14 @@ export class EmailTemplateService {
   async remove(
     deleteEmailTemplateDto: DeleteEmailTemplateDto,
   ): Promise<EmailTemplate> {
-    const { id, is_hard, actor } = deleteEmailTemplateDto;
+    const { id, is_hard, organization_id, actor } = deleteEmailTemplateDto;
 
-    const data = await this.emailTemplateRepository.findOne({ id });
+    const data = await this.emailTemplateRepository.findOne({
+      where: {
+        id,
+        organization_id,
+      },
+    });
 
     if (!data) {
       throw new RpcException(

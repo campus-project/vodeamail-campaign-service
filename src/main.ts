@@ -43,6 +43,7 @@ patchTypeORMRepositoryWithBaseRepository();
     new ValidationRpcPipe({
       transform: true,
       whitelist: true,
+      stopAtFirstError: true,
     }),
   );
 

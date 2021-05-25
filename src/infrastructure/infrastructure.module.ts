@@ -2,6 +2,7 @@ import { Module, Provider } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 const providers: Provider[] = [
   {
@@ -30,7 +31,7 @@ const providers: Provider[] = [
 ];
 
 @Module({
-  imports: [ConfigModule.forRoot(), DatabaseModule],
+  imports: [ConfigModule.forRoot(), ScheduleModule.forRoot(), DatabaseModule],
   providers: [...providers],
   exports: [...providers],
 })

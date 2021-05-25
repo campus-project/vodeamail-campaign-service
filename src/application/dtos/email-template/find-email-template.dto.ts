@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class FindEmailTemplateDto {
   @IsNotEmpty()
@@ -9,6 +9,7 @@ export class FindEmailTemplateDto {
   @IsUUID('4')
   id?: string;
 
+  @IsArray()
   @IsOptional()
   @IsUUID('4', { each: true })
   ids?: string[];

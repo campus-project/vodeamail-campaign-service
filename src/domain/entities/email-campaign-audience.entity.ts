@@ -32,7 +32,7 @@ export class EmailCampaignAudience {
   html: string;
 
   @Column({ type: 'tinyint', default: 1 })
-  is_subscribed: string;
+  is_subscribed: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
   accepted: string;
