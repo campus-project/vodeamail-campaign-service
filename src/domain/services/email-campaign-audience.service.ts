@@ -10,7 +10,10 @@ import * as moment from 'moment';
 import { AcceptedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/accepted-email-campaign-audience.dto';
 import { DeliveredEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/delivered-email-campaign-audience.dto';
 import { OpenedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/opened-email-campaign-audience.dto';
-import { EmailCampaignAnalytic } from '../entities/email-campaign-analytic.entity';
+import {
+  EmailCampaignAnalytic,
+  EmailCampaignAnalyticType,
+} from '../entities/email-campaign-analytic.entity';
 import { ClickedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/clicked-email-campaign-audience.dto';
 import { UnsubscribeEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/unsubscribe-email-campaign-audience.dto';
 import { FailedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/failed-email-campaign-audience.dto';
@@ -94,7 +97,12 @@ export class EmailCampaignAudienceService {
     const { id, timestamp } = acceptedEmailCampaignAudienceDto;
 
     const emailCampaignAudience =
-      await this.emailCampaignAudienceRepository.findOne({ id });
+      await this.emailCampaignAudienceRepository.findOne({
+        where: {
+          id,
+          accepted: IsNull(),
+        },
+      });
 
     if (emailCampaignAudience) {
       await this.emailCampaignAudienceRepository.save({
@@ -112,7 +120,9 @@ export class EmailCampaignAudienceService {
     const { id, timestamp } = deliveredEmailCampaignAudienceDto;
 
     const emailCampaignAudience =
-      await this.emailCampaignAudienceRepository.findOne({ id });
+      await this.emailCampaignAudienceRepository.findOne({
+        where: { id, delivered: IsNull() },
+      });
 
     if (emailCampaignAudience) {
       await this.emailCampaignAudienceRepository.save({
@@ -133,15 +143,17 @@ export class EmailCampaignAudienceService {
       await this.emailCampaignAudienceRepository.findOne({ id });
 
     if (emailCampaignAudience) {
-      await this.emailCampaignAudienceRepository.save({
-        ...emailCampaignAudience,
-        opened: timestamp,
-      });
+      if (emailCampaignAudience.opened === null) {
+        await this.emailCampaignAudienceRepository.save({
+          ...emailCampaignAudience,
+          opened: timestamp,
+        });
+      }
 
       await this.emailCampaignAnalyticRepository.save({
         email_campaign_id: emailCampaignAudience.email_campaign_id,
         email_campaign_audience_id: emailCampaignAudience.id,
-        type: 0,
+        type: EmailCampaignAnalyticType.OPENED,
         timestamp,
       });
     }
@@ -158,15 +170,17 @@ export class EmailCampaignAudienceService {
       await this.emailCampaignAudienceRepository.findOne({ id });
 
     if (emailCampaignAudience) {
-      await this.emailCampaignAudienceRepository.save({
-        ...emailCampaignAudience,
-        clicked: timestamp,
-      });
+      if (emailCampaignAudience.clicked === null) {
+        await this.emailCampaignAudienceRepository.save({
+          ...emailCampaignAudience,
+          clicked: timestamp,
+        });
+      }
 
       await this.emailCampaignAnalyticRepository.save({
         email_campaign_id: emailCampaignAudience.email_campaign_id,
         email_campaign_audience_id: emailCampaignAudience.id,
-        type: 1,
+        type: EmailCampaignAnalyticType.CLICKED,
         timestamp,
       });
     }
@@ -199,7 +213,7 @@ export class EmailCampaignAudienceService {
       await this.emailCampaignAnalyticRepository.save({
         email_campaign_id: emailCampaignAudience.email_campaign_id,
         email_campaign_audience_id: emailCampaignAudience.id,
-        type: 2,
+        type: EmailCampaignAnalyticType.UNSUBSCRIBED,
         timestamp,
       });
 
