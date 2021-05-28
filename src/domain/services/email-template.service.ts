@@ -159,8 +159,10 @@ export class EmailTemplateService {
 
   async idExists(roleIdExistsDto: EmailTemplateIdExistsDto): Promise<boolean> {
     const { id, organization_id } = roleIdExistsDto;
-    return !!(await this.emailTemplateRepository.findOne({
-      where: { id, organization_id },
-    }));
+    return (
+      (await this.emailTemplateRepository.count({
+        where: { id, organization_id },
+      })) > 0
+    );
   }
 }

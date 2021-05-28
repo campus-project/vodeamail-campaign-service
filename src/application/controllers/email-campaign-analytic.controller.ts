@@ -31,8 +31,18 @@ export class EmailCampaignAnalyticController {
     @Payload('value')
     deliveredEmailCampaignAudienceDto: DeliveredEmailCampaignAudienceDto,
   ) {
-    return this.emailCampaignAudienceService.setAccepted(
+    return this.emailCampaignAudienceService.setDelivered(
       deliveredEmailCampaignAudienceDto,
+    );
+  }
+
+  @MessagePattern('failedEmailCampaignAudience')
+  failed(
+    @Payload('value')
+    failedEmailCampaignAudienceDto: FailedEmailCampaignAudienceDto,
+  ) {
+    return this.emailCampaignAudienceService.setUnsubscribe(
+      failedEmailCampaignAudienceDto,
     );
   }
 
@@ -41,7 +51,7 @@ export class EmailCampaignAnalyticController {
     @Payload('value')
     openedEmailCampaignAudienceDto: OpenedEmailCampaignAudienceDto,
   ) {
-    return this.emailCampaignAudienceService.setAccepted(
+    return this.emailCampaignAudienceService.setOpened(
       openedEmailCampaignAudienceDto,
     );
   }
@@ -51,7 +61,7 @@ export class EmailCampaignAnalyticController {
     @Payload('value')
     clickedEmailCampaignAudienceDto: ClickedEmailCampaignAudienceDto,
   ) {
-    return this.emailCampaignAudienceService.setAccepted(
+    return this.emailCampaignAudienceService.setClicked(
       clickedEmailCampaignAudienceDto,
     );
   }
@@ -63,16 +73,6 @@ export class EmailCampaignAnalyticController {
   ) {
     return this.emailCampaignAudienceService.setUnsubscribe(
       unsubscribeEmailCampaignAudienceDto,
-    );
-  }
-
-  @MessagePattern('failedEmailCampaignAudience')
-  failed(
-    @Payload('value')
-    failedEmailCampaignAudienceDto: FailedEmailCampaignAudienceDto,
-  ) {
-    return this.emailCampaignAudienceService.setUnsubscribe(
-      failedEmailCampaignAudienceDto,
     );
   }
 }

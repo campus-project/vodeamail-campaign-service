@@ -251,6 +251,7 @@ export class EmailCampaignService {
           .send('findAllContact', {
             group_ids: realGroupIds,
             organization_id: emailCampaign.organization_id,
+            is_subscribed: true,
           })
           .toPromise()
       : [];

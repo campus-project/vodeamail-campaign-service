@@ -1,11 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Raw, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ClientKafka } from '@nestjs/microservices';
 import { EmailCampaignAudience } from '../entities/email-campaign-audience.entity';
 import { Cron } from '@nestjs/schedule';
 
 import * as moment from 'moment';
+
 import { AcceptedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/accepted-email-campaign-audience.dto';
 import { DeliveredEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/delivered-email-campaign-audience.dto';
 import { OpenedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/opened-email-campaign-audience.dto';
@@ -43,74 +44,48 @@ export class EmailCampaignAudienceService {
           },
         },
         where: (qb) => {
-          qb.where({
-            is_subscribed: 1,
-            accepted: IsNull(),
-            failed: IsNull(),
-          })
-            .andWhere('email_campaign.deleted_at IS NULL')
-            .andWhere('email_campaign.send_at <= NOW()');
+          qb.where([
+            { accepted: IsNull() },
+            {
+              accepted: Raw((alias) => `${alias} IS NOT NULL`),
+              delivered: IsNull(),
+              failed: IsNull(),
+            },
+          ])
+            .andWhere('email_campaign.send_at <= NOW()')
+            .andWhere('email_campaign.deleted_at IS NULL');
         },
       });
 
     for (const emailCampaignAudience of emailCampaignAudiences) {
-      await this.sendEmail(emailCampaignAudience).catch();
+      const emailCampaign = emailCampaignAudience.email_campaign;
+
+      const sendEmail = await this.clientKafka
+        .send('createSendEmail', {
+          organization_id: emailCampaign.organization_id,
+          from: `${emailCampaign.from}@${emailCampaign.domain}`,
+          from_name: emailCampaign.from_name,
+          to: emailCampaignAudience.to,
+          to_name: emailCampaignAudience.to_name,
+          subject: emailCampaign.subject,
+          html: emailCampaignAudience.html,
+          external_id: emailCampaignAudience.id,
+        })
+        .toPromise();
+
+      if (sendEmail) {
+        await Promise.all([
+          this.setAccepted({
+            id: emailCampaignAudience.id,
+            timestamp: moment().utc().toISOString(),
+          }),
+          this.setDelivered({
+            id: emailCampaignAudience.id,
+            timestamp: moment().utc().toISOString(),
+          }),
+        ]);
+      }
     }
-  }
-
-  @Cron('*/15 * * * * *')
-  async dispatcherFailedJob() {
-    const emailCampaignAudiences =
-      await this.emailCampaignAudienceRepository.find({
-        join: {
-          alias: 'audience',
-          leftJoinAndSelect: {
-            email_campaign: 'audience.email_campaign',
-          },
-        },
-        where: (qb) => {
-          qb.where({
-            is_subscribed: 1,
-            failed: IsNull(),
-            delivered: IsNull(),
-          })
-            .where('audience.accepted IS NOT NULL')
-            .andWhere('email_campaign.deleted_at IS NULL')
-            .andWhere('email_campaign.send_at <= NOW()');
-        },
-      });
-
-    for (const emailCampaignAudience of emailCampaignAudiences) {
-      await this.sendEmail(emailCampaignAudience).catch();
-    }
-  }
-
-  async sendEmail(emailCampaignAudience: EmailCampaignAudience) {
-    const emailCampaign = emailCampaignAudience.email_campaign;
-
-    delete emailCampaignAudience.email_campaign;
-
-    await this.clientKafka
-      .send('createSendEmail', {
-        organization_id: emailCampaign.organization_id,
-        from: `${emailCampaign.from}@${emailCampaign.domain}`,
-        from_name: emailCampaign.from_name,
-        to: emailCampaignAudience.to,
-        to_name: emailCampaignAudience.to_name,
-        subject: emailCampaign.subject,
-        html: emailCampaignAudience.html,
-      })
-      .toPromise();
-
-    await this.setAccepted({
-      id: emailCampaignAudience.id,
-      timestamp: moment().utc().toISOString(),
-    });
-
-    await this.setDelivered({
-      id: emailCampaignAudience.id,
-      timestamp: moment().utc().toISOString(),
-    });
   }
 
   async setAccepted(
@@ -228,12 +203,11 @@ export class EmailCampaignAudienceService {
         timestamp,
       });
 
-      //todo: to be test
       await this.clientKafka
         .send('updateSubscribeContact', {
           id: emailCampaignAudience.contact_id,
           organization_id: emailCampaignAudience.email_campaign.organization_id,
-          is_subscribed: 0,
+          is_subscribed: false,
         })
         .toPromise();
     }

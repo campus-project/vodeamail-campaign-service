@@ -8,6 +8,7 @@ import { InfrastructureModule } from '../infrastructure/infrastructure.module';
 import { EmailTemplateController } from './controllers/email-template.controller';
 import { EmailCampaignController } from './controllers/email-campaign.controller';
 import { EmailAnalyticController } from './controllers/email-analytic.controller';
+import { EmailCampaignAnalyticController } from './controllers/email-campaign-analytic.controller';
 
 @Module({
   imports: [InfrastructureModule, DomainModule],
@@ -15,6 +16,7 @@ import { EmailAnalyticController } from './controllers/email-analytic.controller
     EmailTemplateController,
     EmailCampaignController,
     EmailAnalyticController,
+    EmailCampaignAnalyticController,
   ],
   providers: [EmailTemplateExistsRule, GroupExistsRule],
   exports: [InfrastructureModule, DomainModule],
