@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -10,6 +11,7 @@ import {
 import { EmailCampaignGroup } from './email-campaign-group.entity';
 import { EmailCampaignAudience } from './email-campaign-audience.entity';
 import { EmailCampaignAnalytic } from './email-campaign-analytic.entity';
+import { EmailTemplate } from './email-template.entity';
 
 @Entity('email_campaigns')
 export class EmailCampaign {
@@ -73,12 +75,21 @@ export class EmailCampaign {
   @Column({ type: 'uuid', nullable: true })
   deleted_by?: string;
 
-  @OneToMany(() => EmailCampaignGroup, (object) => object.email_campaign)
+  @ManyToOne(() => EmailTemplate, (object) => object.email_campaigns)
+  email_template: EmailTemplate;
+
+  @OneToMany(() => EmailCampaignGroup, (object) => object.email_campaign, {
+    onUpdate: 'CASCADE',
+  })
   email_campaign_groups: EmailCampaignGroup[];
 
-  @OneToMany(() => EmailCampaignAudience, (object) => object.email_campaign)
+  @OneToMany(() => EmailCampaignAudience, (object) => object.email_campaign, {
+    onUpdate: 'CASCADE',
+  })
   email_campaign_audiences: EmailCampaignAudience[];
 
-  @OneToMany(() => EmailCampaignAudience, (object) => object.email_campaign)
+  @OneToMany(() => EmailCampaignAudience, (object) => object.email_campaign, {
+    onUpdate: 'CASCADE',
+  })
   email_campaign_analytics: EmailCampaignAnalytic[];
 }

@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { EmailCampaign } from './email-campaign.entity';
 
 @Entity('email_templates')
 export class EmailTemplate {
@@ -47,4 +49,7 @@ export class EmailTemplate {
 
   @Column({ type: 'uuid', nullable: true })
   deleted_by?: string;
+
+  @OneToMany(() => EmailCampaign, (object) => object.email_template)
+  email_campaigns: EmailCampaign[];
 }
