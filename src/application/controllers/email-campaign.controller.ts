@@ -6,6 +6,7 @@ import { CreateEmailCampaignDto } from '../dtos/email-campaign/create-email-camp
 import { UpdateEmailCampaignDto } from '../dtos/email-campaign/update-email-campaign.dto';
 import { FindEmailCampaignDto } from '../dtos/email-campaign/find-email-campaign.dto';
 import { DeleteEmailCampaignDto } from '../dtos/email-campaign/delete-email-campaign.dto';
+import { FindEmailTemplateDto } from '../dtos/email-template/find-email-template.dto';
 
 @Controller()
 export class EmailCampaignController {
@@ -25,6 +26,11 @@ export class EmailCampaignController {
   @MessagePattern('findAllEmailCampaign')
   findAll(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
     return this.emailCampaignService.findAll(findEmailCampaign);
+  }
+
+  @MessagePattern('findAllCountEmailCampaign')
+  findAllCount(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
+    return this.emailCampaignService.findAllCount(findEmailCampaign);
   }
 
   @MessagePattern('findOneEmailCampaign')

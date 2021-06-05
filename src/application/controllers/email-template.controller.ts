@@ -27,6 +27,11 @@ export class EmailTemplateController {
     return this.emailTemplateService.findAll(findEmailTemplate);
   }
 
+  @MessagePattern('findAllCountEmailTemplate')
+  findAllCount(@Payload('value') findEmailTemplate: FindEmailTemplateDto) {
+    return this.emailTemplateService.findAllCount(findEmailTemplate);
+  }
+
   @MessagePattern('findOneEmailTemplate')
   findOne(@Payload('value') findEmailTemplate: FindEmailTemplateDto) {
     return this.emailTemplateService.findOne(findEmailTemplate);

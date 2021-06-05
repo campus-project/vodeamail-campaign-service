@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { In, Repository } from 'typeorm';
+import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
 
@@ -52,19 +52,13 @@ export class EmailTemplateService {
   async findAll(
     findAllEmailTemplateDto: FindEmailTemplateDto,
   ): Promise<EmailTemplate[]> {
-    const { id, ids, organization_id } = findAllEmailTemplateDto;
+    return await this.findQueryBuilder(findAllEmailTemplateDto).getMany();
+  }
 
-    const filteredIds = ids === undefined ? [] : ids;
-    if (id !== undefined) {
-      filteredIds.push(id);
-    }
-
-    return await this.emailTemplateRepository.find({
-      where: {
-        organization_id: organization_id,
-        ...(id || ids ? { id: In(filteredIds) } : {}),
-      },
-    });
+  async findAllCount(
+    findAllCountEmailTemplateDto: FindEmailTemplateDto,
+  ): Promise<number> {
+    return await this.findQueryBuilder(findAllCountEmailTemplateDto).getCount();
   }
 
   async findOne(
@@ -164,5 +158,67 @@ export class EmailTemplateService {
         where: { id, organization_id },
       })) > 0
     );
+  }
+
+  findQueryBuilder(
+    params: FindEmailTemplateDto,
+  ): SelectQueryBuilder<EmailTemplate> {
+    const {
+      id,
+      ids,
+      organization_id,
+      search,
+      per_page,
+      page = 1,
+      order_by,
+      sorted_by = 'ASC',
+      relations,
+    } = params;
+
+    const filteredIds = ids === undefined ? [] : ids;
+    if (id !== undefined) {
+      filteredIds.push(id);
+    }
+
+    let qb = this.emailTemplateRepository
+      .createQueryBuilder('email_template')
+      .where((qb) => {
+        qb.where({
+          organization_id: organization_id,
+          ...(id || ids ? { id: In(filteredIds) } : {}),
+        });
+
+        if (search !== undefined) {
+          const params = { search: `%${search}%` };
+
+          qb.andWhere(
+            new Brackets((q) => {
+              q.where('email_template.name LIKE :search', params);
+            }),
+          );
+        }
+      });
+
+    if (relations !== undefined) {
+      if (relations.includes('email_campaigns')) {
+        qb = qb.leftJoinAndSelect(
+          'email_template.email_campaigns',
+          'email_campaigns',
+        );
+      }
+    }
+
+    if (per_page !== undefined) {
+      qb = qb.take(per_page).skip(page > 1 ? per_page * (page - 1) : 0);
+    }
+
+    if (order_by !== undefined) {
+      qb = qb.orderBy(
+        order_by,
+        ['desc'].includes(sorted_by.toLowerCase()) ? 'DESC' : 'ASC',
+      );
+    }
+
+    return qb;
   }
 }

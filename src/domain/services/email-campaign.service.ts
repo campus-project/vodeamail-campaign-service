@@ -1,5 +1,5 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { In, Repository } from 'typeorm';
+import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ClientKafka, RpcException } from '@nestjs/microservices';
 
@@ -86,19 +86,80 @@ export class EmailCampaignService {
   async findAll(
     findAllEmailCampaignDto: FindEmailCampaignDto,
   ): Promise<EmailCampaign[]> {
-    const { id, ids, organization_id } = findAllEmailCampaignDto;
+    const { organization_id, relations } = findAllEmailCampaignDto;
+    const data = await this.findQueryBuilder(findAllEmailCampaignDto).getMany();
 
-    const filteredIds = ids === undefined ? [] : ids;
-    if (id !== undefined) {
-      filteredIds.push(id);
+    if (relations === undefined || relations.length == 0) {
+      return data;
     }
 
-    return await this.emailCampaignRepository.find({
-      where: {
-        organization_id: organization_id,
-        ...(id || ids ? { id: In(filteredIds) } : {}),
-      },
+    const emailCampaignIds = [];
+    const mapEmailCampaignGroups = {};
+
+    const relationValues = {
+      groups: undefined,
+    };
+
+    data.forEach((emailCampaignId) => {
+      emailCampaignIds.push(emailCampaignId.id);
     });
+
+    if (relations.includes('groups')) {
+      const emailCampaignGroups = await this.emailCampaignGroupRepository.find({
+        where: { email_campaign_id: In(emailCampaignIds) },
+      });
+
+      const groupIds = [];
+      emailCampaignGroups.forEach((emailCampaignGroup) => {
+        if (
+          typeof mapEmailCampaignGroups[
+            emailCampaignGroup.email_campaign_id
+          ] === 'undefined'
+        ) {
+          mapEmailCampaignGroups[emailCampaignGroup.email_campaign_id] = [];
+        }
+
+        mapEmailCampaignGroups[emailCampaignGroup.email_campaign_id].push(
+          emailCampaignGroup.group_id,
+        );
+
+        groupIds.push(emailCampaignGroup.group_id);
+      });
+
+      relationValues.groups = await this.clientKafka
+        .send('findAllGroup', {
+          ids: groupIds,
+          organization_id,
+        })
+        .toPromise();
+    }
+
+    return data.map((emailCampaign) => {
+      if (relationValues.groups !== undefined) {
+        let groups = [];
+
+        if (mapEmailCampaignGroups[emailCampaign.id] !== undefined) {
+          const listGroupIds = mapEmailCampaignGroups[emailCampaign.id];
+          if (Array.isArray(listGroupIds) && listGroupIds.length) {
+            groups = relationValues.groups.filter((group) =>
+              listGroupIds.includes(group.id),
+            );
+          }
+        }
+
+        Object.assign(emailCampaign, {
+          groups,
+        });
+      }
+
+      return emailCampaign;
+    });
+  }
+
+  async findAllCount(
+    findAllCountEmailCampaignDto: FindEmailCampaignDto,
+  ): Promise<number> {
+    return await this.findQueryBuilder(findAllCountEmailCampaignDto).getCount();
   }
 
   async findOne(
@@ -292,5 +353,75 @@ export class EmailCampaignService {
         }
       }
     }
+  }
+
+  findQueryBuilder(
+    params: FindEmailCampaignDto,
+  ): SelectQueryBuilder<EmailCampaign> {
+    const {
+      id,
+      ids,
+      organization_id,
+      search,
+      per_page,
+      page = 1,
+      order_by,
+      sorted_by = 'ASC',
+      relations,
+    } = params;
+
+    const filteredIds = ids === undefined ? [] : ids;
+    if (id !== undefined) {
+      filteredIds.push(id);
+    }
+
+    let qb = this.emailCampaignRepository
+      .createQueryBuilder('email_campaign')
+      .innerJoinAndSelect('email_campaign.summary', 'summary')
+      .where((qb) => {
+        qb.where({
+          organization_id: organization_id,
+          ...(id || ids ? { id: In(filteredIds) } : {}),
+        });
+
+        if (search !== undefined) {
+          const params = { search: `%${search}%` };
+
+          qb.andWhere(
+            new Brackets((q) => {
+              q.where('email_campaign.name LIKE :search', params)
+                .orWhere('email_campaign.subject LIKE :search', params)
+                .orWhere('email_campaign.from LIKE :search', params)
+                .orWhere('email_campaign.from_name LIKE :search', params)
+                .orWhere(
+                  'CONCAT(email_campaign.from, "@", email_campaign.domain) LIKE :search',
+                  params,
+                );
+            }),
+          );
+        }
+      });
+
+    if (relations !== undefined) {
+      if (relations.includes('email_template')) {
+        qb = qb.leftJoinAndSelect(
+          'email_campaign.email_template',
+          'email_template',
+        );
+      }
+    }
+
+    if (per_page !== undefined) {
+      qb = qb.take(per_page).skip(page > 1 ? per_page * (page - 1) : 0);
+    }
+
+    if (order_by !== undefined) {
+      qb = qb.orderBy(
+        order_by,
+        ['desc'].includes(sorted_by.toLowerCase()) ? 'DESC' : 'ASC',
+      );
+    }
+
+    return qb;
   }
 }

@@ -5,6 +5,7 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -12,6 +13,7 @@ import { EmailCampaignGroup } from './email-campaign-group.entity';
 import { EmailCampaignAudience } from './email-campaign-audience.entity';
 import { EmailCampaignAnalytic } from './email-campaign-analytic.entity';
 import { EmailTemplate } from './email-template.entity';
+import { SummaryEmailCampaignView } from '../views/summary-email-campaign.view';
 
 @Entity('email_campaigns')
 export class EmailCampaign {
@@ -92,4 +94,7 @@ export class EmailCampaign {
     onUpdate: 'CASCADE',
   })
   email_campaign_analytics: EmailCampaignAnalytic[];
+
+  @OneToOne(() => SummaryEmailCampaignView, (object) => object.email_campaign)
+  summary: SummaryEmailCampaignView;
 }
