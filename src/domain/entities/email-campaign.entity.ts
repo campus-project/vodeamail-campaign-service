@@ -15,6 +15,7 @@ import { EmailCampaignAnalytic } from './email-campaign-analytic.entity';
 import { EmailTemplate } from './email-template.entity';
 import { SummaryEmailCampaignView } from '../views/summary-email-campaign.view';
 import { Exclude } from 'class-transformer';
+import { SummaryEmailCampaignAnalyticView } from '../views/summary-email-campaign-analytic.view';
 
 @Entity('email_campaigns')
 export class EmailCampaign {
@@ -102,4 +103,10 @@ export class EmailCampaign {
 
   @OneToOne(() => SummaryEmailCampaignView, (object) => object.email_campaign)
   summary: SummaryEmailCampaignView;
+
+  @OneToMany(
+    () => SummaryEmailCampaignAnalyticView,
+    (object) => object.email_campaign,
+  )
+  summary_email_campaign_analytics: SummaryEmailCampaignAnalyticView;
 }

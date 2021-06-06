@@ -9,12 +9,12 @@ import { v4 } from 'uuid';
 import { EmailCampaign } from '../entities/email-campaign.entity';
 import { EmailCampaignGroup } from '../entities/email-campaign-group.entity';
 import { EmailTemplate } from '../entities/email-template.entity';
+import { SummaryUsageEmailCampaignView } from '../views/summary-usage-email-campaign.view';
 import { CreateEmailCampaignDto } from '../../application/dtos/email-campaign/create-email-campaign.dto';
 import { UpdateEmailCampaignDto } from '../../application/dtos/email-campaign/update-email-campaign.dto';
 import { FindEmailCampaignDto } from '../../application/dtos/email-campaign/find-email-campaign.dto';
 import { DeleteEmailCampaignDto } from '../../application/dtos/email-campaign/delete-email-campaign.dto';
 import { EmailCampaignAudience } from '../entities/email-campaign-audience.entity';
-import { ConfigSet } from 'ts-jest/dist/config/config-set';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -30,6 +30,8 @@ export class EmailCampaignService {
     private readonly emailCampaignAudienceRepository: Repository<EmailCampaignAudience>,
     @InjectRepository(EmailTemplate)
     private readonly emailTemplateRepository: Repository<EmailTemplate>,
+    @InjectRepository(SummaryUsageEmailCampaignView)
+    private readonly summaryUsageEmailCampaignViewRepository: Repository<SummaryUsageEmailCampaignView>,
   ) {}
 
   onModuleInit() {
@@ -163,6 +165,15 @@ export class EmailCampaignService {
     findAllCountEmailCampaignDto: FindEmailCampaignDto,
   ): Promise<number> {
     return await this.findQueryBuilder(findAllCountEmailCampaignDto).getCount();
+  }
+
+  async summaryUsage(
+    findAllCountEmailCampaignDto: FindEmailCampaignDto,
+  ): Promise<SummaryUsageEmailCampaignView> {
+    const { organization_id } = findAllCountEmailCampaignDto;
+    return await this.summaryUsageEmailCampaignViewRepository.findOne({
+      where: { organization_id },
+    });
   }
 
   async findOne(
@@ -308,6 +319,7 @@ export class EmailCampaignService {
         await this.emailCampaignGroupRepository.save({
           email_campaign: emailCampaign,
           group_id: group.id,
+          total_contact: group?.summary?.total_contact || 0,
         });
     }
 
@@ -406,11 +418,11 @@ export class EmailCampaignService {
 
   protected makeSettingTag(emailCampaignAudienceId, valueTags): any {
     const config = new ConfigService();
-    const baseUnsubscribeURl =
+    const baseUnsubscribeURL =
       config.get<string>('BASE_UNSUBSCRIBE_URL') || 'http://localhost:8000/a/u';
 
     const settingTags = {
-      unsubscribe_url: `<a href="${baseUnsubscribeURl}?ref=${encodeURIComponent(
+      unsubscribe_url: `<a href="${baseUnsubscribeURL}/${encodeURIComponent(
         emailCampaignAudienceId,
       )}" style="text-decoration: none; color: inherit">Unsubscribe</a>`,
     };
@@ -483,6 +495,20 @@ export class EmailCampaignService {
         qb = qb.leftJoinAndSelect(
           'email_campaign.email_template',
           'email_template',
+        );
+      }
+
+      if (relations.includes('email_campaign_groups')) {
+        qb = qb.leftJoinAndSelect(
+          'email_campaign.email_campaign_groups',
+          'email_campaign_groups',
+        );
+      }
+
+      if (relations.includes('summary_email_campaign_analytics')) {
+        qb = qb.leftJoinAndSelect(
+          'email_campaign.summary_email_campaign_analytics',
+          'summary_email_campaign_analytics',
         );
       }
     }

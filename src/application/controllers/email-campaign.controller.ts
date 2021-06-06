@@ -33,6 +33,11 @@ export class EmailCampaignController {
     return this.emailCampaignService.findAllCount(findEmailCampaign);
   }
 
+  @MessagePattern('findSummaryUsageEmailCampaign')
+  summaryUsage(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
+    return this.emailCampaignService.summaryUsage(findEmailCampaign);
+  }
+
   @MessagePattern('findOneEmailCampaign')
   findOne(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
     return this.emailCampaignService.findOne(findEmailCampaign);

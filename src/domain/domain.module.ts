@@ -4,13 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { InfrastructureModule } from '../infrastructure/infrastructure.module';
 import { EmailTemplateService } from './services/email-template.service';
 import { EmailCampaignService } from './services/email-campaign.service';
-import { EmailAnalyticService } from './services/email-analytic.service';
+import { EmailCampaignAudienceService } from './services/email-campaign-audience.service';
 import { EmailTemplate } from './entities/email-template.entity';
 import { EmailCampaign } from './entities/email-campaign.entity';
 import { EmailCampaignGroup } from './entities/email-campaign-group.entity';
 import { EmailCampaignAudience } from './entities/email-campaign-audience.entity';
 import { EmailCampaignAnalytic } from './entities/email-campaign-analytic.entity';
-import { EmailCampaignAudienceService } from './services/email-campaign-audience.service';
+import { SummaryUsageEmailCampaignView } from './views/summary-usage-email-campaign.view';
 
 const providers: Provider[] = [
   {
@@ -25,10 +25,6 @@ const providers: Provider[] = [
     provide: 'EMAIL_CAMPAIGN_AUDIENCE_SERVICE',
     useClass: EmailCampaignAudienceService,
   },
-  {
-    provide: 'EMAIL_ANALYTIC_SERVICE',
-    useClass: EmailAnalyticService,
-  },
 ];
 
 @Module({
@@ -40,6 +36,7 @@ const providers: Provider[] = [
       EmailCampaignGroup,
       EmailCampaignAudience,
       EmailCampaignAnalytic,
+      SummaryUsageEmailCampaignView,
     ]),
   ],
   providers: [...providers],

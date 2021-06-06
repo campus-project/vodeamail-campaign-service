@@ -32,5 +32,5 @@ export class EmailCampaignAnalytic {
     () => EmailCampaignAudience,
     (object) => object.email_campaign_analytics,
   )
-  email_campaign_analytics: EmailCampaignAudience;
+  email_campaign_audience: EmailCampaignAudience;
 }

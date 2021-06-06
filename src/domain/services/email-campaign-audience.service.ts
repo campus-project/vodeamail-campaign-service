@@ -17,6 +17,7 @@ import {
 import { ClickedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/clicked-email-campaign-audience.dto';
 import { UnsubscribeEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/unsubscribe-email-campaign-audience.dto';
 import { FailedEmailCampaignAudienceDto } from '../../application/dtos/email-campaign-audience/failed-email-campaign-audience.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailCampaignAudienceService {
@@ -37,7 +38,7 @@ export class EmailCampaignAudienceService {
   }
 
   @Cron('*/3 * * * * *')
-  async dispatcherJob() {
+  async jobDispatcher() {
     const emailCampaignAudiences =
       await this.emailCampaignAudienceRepository.find({
         join: {
@@ -63,6 +64,11 @@ export class EmailCampaignAudienceService {
     for (const emailCampaignAudience of emailCampaignAudiences) {
       const emailCampaign = emailCampaignAudience.email_campaign;
 
+      let content = emailCampaignAudience.html;
+      content = this.injectLinkTracker(emailCampaignAudience.id, content);
+      content = this.injectPixelTracker(emailCampaignAudience.id, content);
+
+      let exceptionMessage = null;
       const sendEmail = await this.clientKafka
         .send('createSendEmail', {
           organization_id: emailCampaign.organization_id,
@@ -71,12 +77,22 @@ export class EmailCampaignAudienceService {
           to: emailCampaignAudience.to,
           to_name: emailCampaignAudience.to_name,
           subject: emailCampaign.subject,
-          html: emailCampaignAudience.html,
+          html: content,
           external_id: emailCampaignAudience.id,
         })
-        .toPromise();
+        .toPromise()
+        .catch((e) => (exceptionMessage = e));
 
-      if (sendEmail) {
+      if (exceptionMessage !== null) {
+        //prevent multiple request
+        if (exceptionMessage?.statusCode !== 400) {
+          await this.setFailed({
+            id: emailCampaignAudience.id,
+            timestamp: moment().utc().toISOString(),
+            failed: JSON.stringify(exceptionMessage),
+          });
+        }
+      } else if (sendEmail) {
         await Promise.all([
           this.setAccepted({
             id: emailCampaignAudience.id,
@@ -89,6 +105,36 @@ export class EmailCampaignAudienceService {
         ]);
       }
     }
+  }
+
+  injectLinkTracker(emailAudienceId: string, html: string): string {
+    const config = new ConfigService();
+    const baseClickURL =
+      config.get<string>('BASE_CLICK_TRACKER_URL') ||
+      'http://localhost:3010/v1/c/';
+
+    return html.replace(
+      new RegExp(/(<a[^>]*href=["])([^"]*)/, 'gm'),
+      function (m, $1, $2) {
+        const newUrl = !$2
+          ? '/'
+          : `${baseClickURL}/${encodeURIComponent(
+              emailAudienceId,
+            )}/${encodeURIComponent($2)}`;
+
+        return $1 + newUrl;
+      },
+    );
+  }
+
+  injectPixelTracker(emailAudienceId: string, html: string) {
+    const config = new ConfigService();
+    const baseOpenURL =
+      config.get<string>('BASE_OPEN_TRACKER_URL') ||
+      'http://localhost:3010/v1/o/';
+
+    const trackingPixel = `<img alt="" style="height: 1px; width: 1px; border: 0" src="${baseOpenURL}/${emailAudienceId}" />`;
+    return html.replace('\n', trackingPixel);
   }
 
   async setAccepted(
