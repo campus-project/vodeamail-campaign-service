@@ -14,6 +14,8 @@ import { UpdateEmailCampaignDto } from '../../application/dtos/email-campaign/up
 import { FindEmailCampaignDto } from '../../application/dtos/email-campaign/find-email-campaign.dto';
 import { DeleteEmailCampaignDto } from '../../application/dtos/email-campaign/delete-email-campaign.dto';
 import { EmailCampaignAudience } from '../entities/email-campaign-audience.entity';
+import { ConfigSet } from 'ts-jest/dist/config/config-set';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailCampaignService {
@@ -31,7 +33,7 @@ export class EmailCampaignService {
   ) {}
 
   onModuleInit() {
-    const patterns = ['findAllGroup', 'findAllContact'];
+    const patterns = ['findAllGroup', 'findAllContact', 'findOneOrganization'];
     for (const pattern of patterns) {
       this.clientKafka.subscribeToResponseOf(pattern);
     }
@@ -46,6 +48,7 @@ export class EmailCampaignService {
       subject,
       from_name,
       from,
+      domain,
       send_at,
       is_directly_send,
       email_template_id,
@@ -63,7 +66,7 @@ export class EmailCampaignService {
       subject,
       from_name,
       from,
-      domain: 'vodeacloud.com',
+      domain,
       send_at,
       is_directly_send,
       email_template_id,
@@ -179,6 +182,7 @@ export class EmailCampaignService {
       subject,
       from_name,
       from,
+      domain,
       send_at,
       is_directly_send,
       email_template_id,
@@ -213,7 +217,7 @@ export class EmailCampaignService {
       subject,
       from_name,
       from,
-      domain: 'vodeacloud.com',
+      domain,
       send_at,
       is_directly_send,
       email_template_id,
@@ -332,6 +336,10 @@ export class EmailCampaignService {
       ),
     );
 
+    let valueTags = await this.makeOrganizationTag(
+      emailCampaign.organization_id,
+    );
+
     for (const contact of contacts) {
       if (
         currentEmailCampaignAudiences.findIndex(
@@ -341,18 +349,86 @@ export class EmailCampaignService {
       ) {
         if (contact.is_subscribed) {
           const emailCampaignAudienceId = v4();
+
+          valueTags = this.makeContactTag(contact, valueTags);
+          valueTags = this.makeSettingTag(emailCampaignAudienceId, valueTags);
+
           await this.emailCampaignAudienceRepository.save({
             id: emailCampaignAudienceId,
             email_campaign: emailCampaign,
             contact_id: contact.id,
             to: contact.email,
             to_name: contact.name,
-            value_tags: JSON.stringify({}),
-            html: emailCampaign.email_template_html,
+            value_tags: JSON.stringify(valueTags),
+            html: this.tagReplace(emailCampaign.email_template_html, valueTags),
           });
         }
       }
     }
+  }
+
+  protected async makeOrganizationTag(organizationId: string): Promise<any> {
+    const organization = await this.clientKafka
+      .send('findOneOrganization', {
+        id: organizationId,
+      })
+      .toPromise();
+
+    if (!organization) {
+      throw new RpcException(`Could not find organization ${organizationId}.`);
+    }
+
+    return {
+      org_name: organization.name,
+      org_address: organization.address,
+      org_telephone: organization.telephone,
+      org_fax: organization.fax,
+    };
+  }
+
+  protected makeContactTag(contact, valueTags): any {
+    const contactTags = {
+      email: contact.email,
+      name: contact.name,
+      mobile_phone: contact.mobile_phone,
+      address_line_1: contact.address_line_1,
+      address_line_2: contact.address_line_2,
+      country: contact.country,
+      province: contact.province,
+      city: contact.city,
+      postal_code: contact.postal_code,
+    };
+
+    Object.assign(contactTags, valueTags);
+
+    return contactTags;
+  }
+
+  protected makeSettingTag(emailCampaignAudienceId, valueTags): any {
+    const config = new ConfigService();
+    const baseUnsubscribeURl =
+      config.get<string>('BASE_UNSUBSCRIBE_URL') || 'http://localhost:8000/a/u';
+
+    const settingTags = {
+      unsubscribe_url: `<a href="${baseUnsubscribeURl}?ref=${encodeURIComponent(
+        emailCampaignAudienceId,
+      )}" style="text-decoration: none; color: inherit">Unsubscribe</a>`,
+    };
+
+    Object.assign(settingTags, valueTags);
+
+    return settingTags;
+  }
+
+  protected tagReplace(templateHtml: string, search): string {
+    Object.keys(search).forEach((key) => {
+      templateHtml = templateHtml.replace(
+        new RegExp('{{ ' + key + ' }}', 'mg'),
+        search[key],
+      );
+    });
+
+    return templateHtml;
   }
 
   findQueryBuilder(

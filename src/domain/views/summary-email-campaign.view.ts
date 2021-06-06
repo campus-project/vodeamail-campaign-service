@@ -7,10 +7,6 @@ import { EmailCampaign } from '../entities/email-campaign.entity';
     SELECT
       email_campaigns.id AS email_campaign_id,
       CONCAT(email_campaigns.from, "@", email_campaigns.domain) as from_email,
-      CASE
-        WHEN email_campaigns.send_at <= NOW() THEN 1
-        ELSE 0
-      END AS 'status',
       COALESCE ( email_campaign_groups.total_group, 0 ) total_group,
       COALESCE ( email_campaign_audiences.total_audience, 0 ) total_audience,
       COALESCE ( email_campaign_audiences.total_delivered, 0 ) total_delivered,
@@ -63,9 +59,6 @@ export class SummaryEmailCampaignView {
 
   @ViewColumn()
   from_email: string;
-
-  @ViewColumn()
-  status: number;
 
   @ViewColumn()
   total_group: number;

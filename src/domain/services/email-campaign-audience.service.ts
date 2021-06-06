@@ -48,7 +48,7 @@ export class EmailCampaignAudienceService {
         },
         where: (qb) => {
           qb.where([
-            { accepted: IsNull() },
+            { accepted: IsNull(), delivered: IsNull(), failed: IsNull() },
             {
               accepted: Raw((alias) => `${alias} IS NOT NULL`),
               delivered: IsNull(),

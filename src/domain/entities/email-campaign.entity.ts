@@ -14,6 +14,7 @@ import { EmailCampaignAudience } from './email-campaign-audience.entity';
 import { EmailCampaignAnalytic } from './email-campaign-analytic.entity';
 import { EmailTemplate } from './email-template.entity';
 import { SummaryEmailCampaignView } from '../views/summary-email-campaign.view';
+import { Exclude } from 'class-transformer';
 
 @Entity('email_campaigns')
 export class EmailCampaign {
@@ -47,15 +48,19 @@ export class EmailCampaign {
   @Column({ type: 'uuid' })
   email_template_id: string;
 
+  @Exclude()
   @Column({ type: 'text' })
   email_template_html: string;
 
+  @Exclude()
   @Column({ type: 'text' })
   email_template_design: string;
 
+  @Exclude()
   @Column({ type: 'text' })
   email_template_example_value_tags: string;
 
+  @Exclude()
   @Column({ type: 'varchar' })
   email_template_image_url: string;
 
