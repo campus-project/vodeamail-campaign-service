@@ -2,7 +2,7 @@ FROM node:14-alpine as build
 
 WORKDIR /usr/local/app
 
-COPY dist package.json ./
+COPY dist package.json yarn.lock ./
 
 RUN yarn install --production
 
