@@ -8,6 +8,9 @@ import { EmailTemplate } from '../../domain/entities/email-template.entity';
 import { EmailCampaignGroup } from '../../domain/entities/email-campaign-group.entity';
 import { EmailCampaignAudience } from '../../domain/entities/email-campaign-audience.entity';
 import { EmailCampaignAnalytic } from '../../domain/entities/email-campaign-analytic.entity';
+import { SummaryEmailCampaignView } from '../../domain/views/summary-email-campaign.view';
+import { SummaryEmailCampaignAnalyticView } from '../../domain/views/summary-email-campaign-analytic.view';
+import { SummaryUsageEmailCampaignView } from '../../domain/views/summary-usage-email-campaign.view';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { EmailCampaignAnalytic } from '../../domain/entities/email-campaign-anal
           EmailCampaignGroup,
           EmailCampaignAudience,
           EmailCampaignAnalytic,
+          SummaryEmailCampaignView,
+          SummaryEmailCampaignAnalyticView,
+          SummaryUsageEmailCampaignView,
         ],
         timezone: 'UTC',
       }),

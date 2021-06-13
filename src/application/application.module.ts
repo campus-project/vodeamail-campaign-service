@@ -7,7 +7,6 @@ import { DomainModule } from '../domain/domain.module';
 import { InfrastructureModule } from '../infrastructure/infrastructure.module';
 import { EmailTemplateController } from './controllers/email-template.controller';
 import { EmailCampaignController } from './controllers/email-campaign.controller';
-import { EmailAnalyticController } from './controllers/email-analytic.controller';
 import { EmailCampaignAnalyticController } from './controllers/email-campaign-analytic.controller';
 
 @Module({
@@ -15,7 +14,6 @@ import { EmailCampaignAnalyticController } from './controllers/email-campaign-an
   controllers: [
     EmailTemplateController,
     EmailCampaignController,
-    EmailAnalyticController,
     EmailCampaignAnalyticController,
   ],
   providers: [EmailTemplateExistsRule, GroupExistsRule],

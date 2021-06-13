@@ -12,6 +12,9 @@ export class EmailCampaignGroup {
   @Column({ type: 'uuid' })
   group_id: string;
 
+  @Column({ type: 'int', unsigned: true })
+  total_contact: number;
+
   @ManyToOne(() => EmailCampaign, (object) => object.email_campaign_groups)
   email_campaign: EmailCampaign;
 }

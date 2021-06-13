@@ -34,6 +34,10 @@ export class CreateEmailCampaignDto {
   from: string;
 
   @IsNotEmpty()
+  @IsString()
+  domain: string;
+
+  @IsNotEmpty()
   @IsDateString()
   send_at: string;
 

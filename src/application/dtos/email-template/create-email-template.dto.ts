@@ -28,7 +28,7 @@ export class CreateEmailTemplateDto {
   example_value_tags: string;
 
   @IsNotEmpty()
-  @IsUrl()
+  @IsUrl({ require_tld: false })
   image_url: string;
 
   @IsOptional()
