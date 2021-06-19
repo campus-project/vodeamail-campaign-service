@@ -1,0 +1,18 @@
+name: PR WorkFlow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - staging
+
+jobs:
+  app-tests:
+    name: Setup CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install NPM Dependencies
+        run: yarn install
+#      - name: Execute tests (Unit and e2e tests)
+#        run: yarn test --watchAll=false
