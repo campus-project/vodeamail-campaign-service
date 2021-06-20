@@ -31,6 +31,10 @@ export class EmailCampaignAnalytic {
   @ManyToOne(
     () => EmailCampaignAudience,
     (object) => object.email_campaign_analytics,
+    {
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
+    },
   )
   email_campaign_audience: EmailCampaignAudience;
 }
