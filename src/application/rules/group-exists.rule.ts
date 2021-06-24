@@ -10,25 +10,16 @@ import { ClientKafka } from '@nestjs/microservices';
 @Injectable()
 export class GroupExistsRule implements ValidatorConstraintInterface {
   constructor(
-    @Inject('CLIENT_KAFKA')
-    private clientKafka: ClientKafka,
+    @Inject('AUDIENCE_SERVICE')
+    private audienceService: ClientKafka,
   ) {}
-
-  async onModuleInit() {
-    const patterns = ['existsGroup'];
-    for (const pattern of patterns) {
-      this.clientKafka.subscribeToResponseOf(pattern);
-    }
-
-    await this.clientKafka.connect();
-  }
 
   async validate(value: string, args: ValidationArguments) {
     if (!value) {
       return false;
     }
 
-    const result = await this.clientKafka
+    const result = await this.audienceService
       .send('existsGroup', {
         id: value,
         organization_id: (args.object as any)['organization_id'],
