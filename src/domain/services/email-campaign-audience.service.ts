@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull, Raw, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClientKafka } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { EmailCampaignAudience } from '../entities/email-campaign-audience.entity';
 import { Cron } from '@nestjs/schedule';
 
@@ -22,20 +22,15 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class EmailCampaignAudienceService {
   constructor(
-    @Inject('CLIENT_KAFKA')
-    private readonly clientKafka: ClientKafka,
+    @Inject('AUDIENCE_SERVICE')
+    private readonly audienceService: ClientProxy,
+    @Inject('MAILER_SERVICE')
+    private readonly mailerService: ClientProxy,
     @InjectRepository(EmailCampaignAudience)
     private readonly emailCampaignAudienceRepository: Repository<EmailCampaignAudience>,
     @InjectRepository(EmailCampaignAnalytic)
     private readonly emailCampaignAnalyticRepository: Repository<EmailCampaignAnalytic>,
   ) {}
-
-  onModuleInit() {
-    const patterns = ['createSendEmail', 'updateSubscribeContact'];
-    for (const pattern of patterns) {
-      this.clientKafka.subscribeToResponseOf(pattern);
-    }
-  }
 
   @Cron('*/3 * * * * *')
   async jobDispatcher() {
@@ -69,7 +64,7 @@ export class EmailCampaignAudienceService {
       content = this.injectPixelTracker(emailCampaignAudience.id, content);
 
       let exceptionMessage = null;
-      const sendEmail = await this.clientKafka
+      const sendEmail = await this.mailerService
         .send('createSendEmail', {
           organization_id: emailCampaign.organization_id,
           from: `${emailCampaign.from}@${emailCampaign.domain}`,
@@ -162,7 +157,7 @@ export class EmailCampaignAudienceService {
 
   async setDelivered(
     deliveredEmailCampaignAudienceDto: DeliveredEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     const { id, timestamp } = deliveredEmailCampaignAudienceDto;
 
     const emailCampaignAudience =
@@ -182,7 +177,7 @@ export class EmailCampaignAudienceService {
 
   async setOpened(
     openedEmailCampaignAudienceDto: OpenedEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     const { id, timestamp } = openedEmailCampaignAudienceDto;
 
     const emailCampaignAudience =
@@ -209,7 +204,7 @@ export class EmailCampaignAudienceService {
 
   async setClicked(
     clickedEmailCampaignAudienceDto: ClickedEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     const { id, timestamp } = clickedEmailCampaignAudienceDto;
 
     const emailCampaignAudience =
@@ -236,7 +231,7 @@ export class EmailCampaignAudienceService {
 
   async setUnsubscribe(
     unsubscribeEmailCampaignAudienceDto: UnsubscribeEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     const { id, timestamp } = unsubscribeEmailCampaignAudienceDto;
 
     const emailCampaignAudience =
@@ -263,7 +258,7 @@ export class EmailCampaignAudienceService {
         timestamp,
       });
 
-      await this.clientKafka
+      await this.audienceService
         .send('updateSubscribeContact', {
           id: emailCampaignAudience.contact_id,
           organization_id: emailCampaignAudience.email_campaign.organization_id,
@@ -277,7 +272,7 @@ export class EmailCampaignAudienceService {
 
   async setFailed(
     failedEmailCampaignAudienceDto: FailedEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     const { id, timestamp, failed } = failedEmailCampaignAudienceDto;
 
     const emailCampaignAudience =

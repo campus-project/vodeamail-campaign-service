@@ -20,13 +20,11 @@ import { SummaryUsageEmailCampaignView } from '../../domain/views/summary-usage-
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'mysql',
-        host: configService.get<string>('DB_HOST') || '127.0.0.1',
-        port: configService.get<number>('DB_PORT') || 3306,
-        username: configService.get<string>('DB_USERNAME') || 'root',
-        password: configService.get<string>('DB_PASSWORD') || 'secret',
-        database:
-          configService.get<string>('DB_DATABASE') ||
-          'vodeamail-campaign-service',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
         namingStrategy: new SnakeNamingStrategy(),
         synchronize: true,
         dropSchema: false,

@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClientKafka, RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 
 import * as _ from 'lodash';
 import { v4 } from 'uuid';
@@ -20,8 +20,10 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class EmailCampaignService {
   constructor(
-    @Inject('CLIENT_KAFKA')
-    private readonly clientKafka: ClientKafka,
+    @Inject('ACCOUNT_SERVICE')
+    private readonly accountService: ClientProxy,
+    @Inject('AUDIENCE_SERVICE')
+    private readonly audienceService: ClientProxy,
     @InjectRepository(EmailCampaign)
     private readonly emailCampaignRepository: Repository<EmailCampaign>,
     @InjectRepository(EmailCampaignGroup)
@@ -33,13 +35,6 @@ export class EmailCampaignService {
     @InjectRepository(SummaryUsageEmailCampaignView)
     private readonly summaryUsageEmailCampaignViewRepository: Repository<SummaryUsageEmailCampaignView>,
   ) {}
-
-  onModuleInit() {
-    const patterns = ['findAllGroup', 'findAllContact', 'findOneOrganization'];
-    for (const pattern of patterns) {
-      this.clientKafka.subscribeToResponseOf(pattern);
-    }
-  }
 
   async create(
     createEmailCampaignDto: CreateEmailCampaignDto,
@@ -131,7 +126,7 @@ export class EmailCampaignService {
         groupIds.push(emailCampaignGroup.group_id);
       });
 
-      relationValues.groups = await this.clientKafka
+      relationValues.groups = await this.audienceService
         .send('findAllGroup', {
           ids: groupIds,
           organization_id,
@@ -287,7 +282,7 @@ export class EmailCampaignService {
     groupIds: string[],
   ): Promise<void> {
     const groups = groupIds.length
-      ? await this.clientKafka
+      ? await this.audienceService
           .send('findAllGroup', {
             ids: groupIds,
             organization_id: emailCampaign.organization_id,
@@ -324,7 +319,7 @@ export class EmailCampaignService {
     }
 
     const contacts = realGroupIds.length
-      ? await this.clientKafka
+      ? await this.audienceService
           .send('findAllContact', {
             group_ids: realGroupIds,
             organization_id: emailCampaign.organization_id,
@@ -380,7 +375,7 @@ export class EmailCampaignService {
   }
 
   protected async makeOrganizationTag(organizationId: string): Promise<any> {
-    const organization = await this.clientKafka
+    const organization = await this.accountService
       .send('findOneOrganization', {
         id: organizationId,
       })

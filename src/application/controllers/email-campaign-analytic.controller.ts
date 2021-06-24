@@ -17,60 +17,60 @@ export class EmailCampaignAnalyticController {
   ) {}
 
   @MessagePattern('acceptedEmailCampaignAudience')
-  accepted(
-    @Payload('value')
+  async accepted(
+    @Payload()
     acceptedEmailCampaignAudienceDto: AcceptedEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     return this.emailCampaignAudienceService.setAccepted(
       acceptedEmailCampaignAudienceDto,
     );
   }
 
   @MessagePattern('deliveredEmailCampaignAudience')
-  delivered(
-    @Payload('value')
+  async delivered(
+    @Payload()
     deliveredEmailCampaignAudienceDto: DeliveredEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     return this.emailCampaignAudienceService.setDelivered(
       deliveredEmailCampaignAudienceDto,
     );
   }
 
   @MessagePattern('failedEmailCampaignAudience')
-  failed(
-    @Payload('value')
+  async failed(
+    @Payload()
     failedEmailCampaignAudienceDto: FailedEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     return this.emailCampaignAudienceService.setUnsubscribe(
       failedEmailCampaignAudienceDto,
     );
   }
 
   @MessagePattern('openedEmailCampaignAudience')
-  opened(
-    @Payload('value')
+  async opened(
+    @Payload()
     openedEmailCampaignAudienceDto: OpenedEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     return this.emailCampaignAudienceService.setOpened(
       openedEmailCampaignAudienceDto,
     );
   }
 
   @MessagePattern('clickedEmailCampaignAudience')
-  clicked(
-    @Payload('value')
+  async clicked(
+    @Payload()
     clickedEmailCampaignAudienceDto: ClickedEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     return this.emailCampaignAudienceService.setClicked(
       clickedEmailCampaignAudienceDto,
     );
   }
 
   @MessagePattern('unsubscribeEmailCampaignAudience')
-  unsubscribe(
-    @Payload('value')
+  async unsubscribe(
+    @Payload()
     unsubscribeEmailCampaignAudienceDto: UnsubscribeEmailCampaignAudienceDto,
-  ) {
+  ): Promise<boolean> {
     return this.emailCampaignAudienceService.setUnsubscribe(
       unsubscribeEmailCampaignAudienceDto,
     );

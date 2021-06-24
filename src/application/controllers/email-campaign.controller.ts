@@ -6,7 +6,8 @@ import { CreateEmailCampaignDto } from '../dtos/email-campaign/create-email-camp
 import { UpdateEmailCampaignDto } from '../dtos/email-campaign/update-email-campaign.dto';
 import { FindEmailCampaignDto } from '../dtos/email-campaign/find-email-campaign.dto';
 import { DeleteEmailCampaignDto } from '../dtos/email-campaign/delete-email-campaign.dto';
-import { FindEmailTemplateDto } from '../dtos/email-template/find-email-template.dto';
+import { EmailCampaign } from '../../domain/entities/email-campaign.entity';
+import { SummaryUsageEmailCampaignView } from '../../domain/views/summary-usage-email-campaign.view';
 
 @Controller()
 export class EmailCampaignController {
@@ -16,40 +17,52 @@ export class EmailCampaignController {
   ) {}
 
   @MessagePattern('createEmailCampaign')
-  create(
-    @Payload('value')
+  async create(
+    @Payload()
     createEmailCampaignDto: CreateEmailCampaignDto,
-  ) {
-    return this.emailCampaignService.create(createEmailCampaignDto);
+  ): Promise<EmailCampaign> {
+    return await this.emailCampaignService.create(createEmailCampaignDto);
   }
 
   @MessagePattern('findAllEmailCampaign')
-  findAll(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
-    return this.emailCampaignService.findAll(findEmailCampaign);
+  async findAll(
+    @Payload() findEmailCampaign: FindEmailCampaignDto,
+  ): Promise<EmailCampaign[]> {
+    return await this.emailCampaignService.findAll(findEmailCampaign);
   }
 
   @MessagePattern('findAllCountEmailCampaign')
-  findAllCount(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
-    return this.emailCampaignService.findAllCount(findEmailCampaign);
+  async findAllCount(
+    @Payload() findEmailCampaign: FindEmailCampaignDto,
+  ): Promise<number> {
+    return await this.emailCampaignService.findAllCount(findEmailCampaign);
   }
 
   @MessagePattern('findSummaryUsageEmailCampaign')
-  summaryUsage(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
-    return this.emailCampaignService.summaryUsage(findEmailCampaign);
+  async summaryUsage(
+    @Payload() findEmailCampaign: FindEmailCampaignDto,
+  ): Promise<SummaryUsageEmailCampaignView> {
+    return await this.emailCampaignService.summaryUsage(findEmailCampaign);
   }
 
   @MessagePattern('findOneEmailCampaign')
-  findOne(@Payload('value') findEmailCampaign: FindEmailCampaignDto) {
-    return this.emailCampaignService.findOne(findEmailCampaign);
+  async findOne(
+    @Payload() findEmailCampaign: FindEmailCampaignDto,
+  ): Promise<EmailCampaign> {
+    return await this.emailCampaignService.findOne(findEmailCampaign);
   }
 
   @MessagePattern('updateEmailCampaign')
-  update(@Payload('value') updateEmailCampaignDto: UpdateEmailCampaignDto) {
-    return this.emailCampaignService.update(updateEmailCampaignDto);
+  async update(
+    @Payload() updateEmailCampaignDto: UpdateEmailCampaignDto,
+  ): Promise<EmailCampaign> {
+    return await this.emailCampaignService.update(updateEmailCampaignDto);
   }
 
   @MessagePattern('removeEmailCampaign')
-  remove(@Payload('value') deleteEmailCampaign: DeleteEmailCampaignDto) {
-    return this.emailCampaignService.remove(deleteEmailCampaign);
+  async remove(
+    @Payload() deleteEmailCampaign: DeleteEmailCampaignDto,
+  ): Promise<EmailCampaign> {
+    return await this.emailCampaignService.remove(deleteEmailCampaign);
   }
 }

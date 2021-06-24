@@ -6,6 +6,7 @@ import { CreateEmailTemplateDto } from '../dtos/email-template/create-email-temp
 import { UpdateEmailTemplateDto } from '../dtos/email-template/update-email-template.dto';
 import { FindEmailTemplateDto } from '../dtos/email-template/find-email-template.dto';
 import { DeleteEmailTemplateDto } from '../dtos/email-template/delete-email-template.dto';
+import { EmailTemplate } from '../../domain/entities/email-template.entity';
 
 @Controller()
 export class EmailTemplateController {
@@ -15,35 +16,45 @@ export class EmailTemplateController {
   ) {}
 
   @MessagePattern('createEmailTemplate')
-  create(
-    @Payload('value')
+  async create(
+    @Payload()
     createEmailTemplateDto: CreateEmailTemplateDto,
-  ) {
-    return this.emailTemplateService.create(createEmailTemplateDto);
+  ): Promise<EmailTemplate> {
+    return await this.emailTemplateService.create(createEmailTemplateDto);
   }
 
   @MessagePattern('findAllEmailTemplate')
-  findAll(@Payload('value') findEmailTemplate: FindEmailTemplateDto) {
-    return this.emailTemplateService.findAll(findEmailTemplate);
+  async findAll(
+    @Payload() findEmailTemplate: FindEmailTemplateDto,
+  ): Promise<EmailTemplate[]> {
+    return await this.emailTemplateService.findAll(findEmailTemplate);
   }
 
   @MessagePattern('findAllCountEmailTemplate')
-  findAllCount(@Payload('value') findEmailTemplate: FindEmailTemplateDto) {
-    return this.emailTemplateService.findAllCount(findEmailTemplate);
+  async findAllCount(
+    @Payload() findEmailTemplate: FindEmailTemplateDto,
+  ): Promise<number> {
+    return await this.emailTemplateService.findAllCount(findEmailTemplate);
   }
 
   @MessagePattern('findOneEmailTemplate')
-  findOne(@Payload('value') findEmailTemplate: FindEmailTemplateDto) {
-    return this.emailTemplateService.findOne(findEmailTemplate);
+  async findOne(
+    @Payload() findEmailTemplate: FindEmailTemplateDto,
+  ): Promise<EmailTemplate> {
+    return await this.emailTemplateService.findOne(findEmailTemplate);
   }
 
   @MessagePattern('updateEmailTemplate')
-  update(@Payload('value') updateEmailTemplateDto: UpdateEmailTemplateDto) {
-    return this.emailTemplateService.update(updateEmailTemplateDto);
+  async update(
+    @Payload() updateEmailTemplateDto: UpdateEmailTemplateDto,
+  ): Promise<EmailTemplate> {
+    return await this.emailTemplateService.update(updateEmailTemplateDto);
   }
 
   @MessagePattern('removeEmailTemplate')
-  remove(@Payload('value') deleteEmailTemplate: DeleteEmailTemplateDto) {
-    return this.emailTemplateService.remove(deleteEmailTemplate);
+  async remove(
+    @Payload() deleteEmailTemplate: DeleteEmailTemplateDto,
+  ): Promise<EmailTemplate> {
+    return await this.emailTemplateService.remove(deleteEmailTemplate);
   }
 }
