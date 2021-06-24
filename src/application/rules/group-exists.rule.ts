@@ -19,16 +19,12 @@ export class GroupExistsRule implements ValidatorConstraintInterface {
       return false;
     }
 
-    const result = await this.audienceService
+    return await this.audienceService
       .send('existsGroup', {
         id: value,
         organization_id: (args.object as any)['organization_id'],
       })
       .toPromise();
-
-    //todo: https://github.com/nestjs/nest/issues/7185
-
-    return result === 'true';
   }
 
   defaultMessage(args: ValidationArguments) {
